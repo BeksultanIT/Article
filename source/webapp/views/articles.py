@@ -4,11 +4,15 @@ from django.db.models import Q
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.http import urlencode
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.views import View
+
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 
 from webapp.forms import ArticleForm, SearchForm
 
-from webapp.models import Article
+from webapp.models import Article, Comment, LikeArticle, LikeComment
 
 
 class ArticleListView(ListView):
@@ -92,8 +96,38 @@ class DetailArticleView(DetailView):
     template_name = 'articles/detail_article.html'
     model = Article
 
-
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
-        result['comments'] = self.object.comments.order_by('-created_at')
+        comments = self.object.comments.order_by('-created_at')
+
+        if self.request.user.is_authenticated:
+            article_liked = self.object.likes.filter(user=self.request.user).exists()
+            for c in comments:
+                c.liked_by_user = c.likes.filter(user=self.request.user).exists()
+        else:
+            article_liked = False
+            for c in comments:
+                c.liked_by_user = False
+
+        result['comments'] = comments
+        result['article_liked'] = article_liked
         return result
+
+
+
+class ToggleArticleLikeView(LoginRequiredMixin, View):
+    def get(self, request, article_id):
+        article = get_object_or_404(Article, id=article_id)
+        like = LikeArticle.objects.filter(user=request.user, article=article).first()
+        if like:
+            like.delete()
+            liked = False
+        else:
+            LikeArticle.objects.create(user=request.user, article=article)
+            liked = True
+
+        return JsonResponse({
+            "liked": liked,
+            "likes_count": article.likes_count,
+        })
+

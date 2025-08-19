@@ -22,3 +22,10 @@ class Comment(BaseCreateUpdateModel):
 
     def get_absolute_url(self):
         return reverse("webapp:article-detail", kwargs={"pk": self.article_id})
+
+    @property
+    def likes_count(self):
+        return self.likes.count()
+
+    def is_liked_by(self, user):
+        return self.likes.filter(user=user).exists()

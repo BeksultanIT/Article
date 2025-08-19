@@ -4,19 +4,21 @@
     <title>{{ article.title }}</title>
 {% endblock %}
 
-
 {% block nav %}
     <li class="nav-item">
         <a class="nav-link active" aria-current="page" href="{% url 'webapp:add-article' %}">Create article</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link active" aria-current="page" href="{% url 'webapp:article-update' article.pk %}">Update article</a>
+        <a class="nav-link active" aria-current="page" href="{% url 'webapp:article-update' article.pk %}">Update
+            article</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link active" aria-current="page" href="{% url 'webapp:article-delete' article.pk %}">Delete article</a>
+        <a class="nav-link active" aria-current="page" href="{% url 'webapp:article-delete' article.pk %}">Delete
+            article</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link active" aria-current="page" href="{% url 'webapp:add-comment' article.pk %}">Create comment</a>
+        <a class="nav-link active" aria-current="page" href="{% url 'webapp:add-comment' article.pk %}">Create
+            comment</a>
     </li>
 {% endblock %}
 
@@ -27,21 +29,48 @@
         <p>Автор - {{ article.author }}</p>
         <p>Дата создания - {{ article.created_at }} </p>
         <p>Статус - {{ article.get_status_display }} </p>
+
+        <div>
+            <button class="like-btn"
+                    data-id="{{ article.id }}"
+                    data-type="article">
+                {% if user.is_authenticated and article_liked %}
+                    Unlike
+                {% else %}
+                    Like
+                {% endif %}
+            </button>
+            <span id="likes-count-article-{{ article.id }}">{{ article.likes_count }}</span>
+        </div>
+
         <hr/>
         <h5>Tags</h5>
         {% for tag in article.tags.all %}
             {% if forloop.last %} {{ tag }}. {% else %} {{ tag }}, {% endif %}
         {% endfor %}
 
-        <h5>Comment</h5>
+        <h5>Comments</h5>
         {% for comment in comments %}
-            <div class="card">
+            <div class="card" style="margin-bottom: 10px; padding: 10px;">
                 <p>{{ comment.text }}</p>
                 <a href="{% url 'webapp:comment-update' comment.pk %}">Update</a>
                 <a href="{% url 'webapp:comment-delete' comment.pk %}">Delete</a>
-            
-            </div>
 
+                <div>
+                    <button class="like-btn"
+                            data-id="{{ comment.id }}"
+                            data-type="comment">
+                        {% if user.is_authenticated and comment.liked_by_user %}
+                            Unlike
+                        {% else %}
+                            Like
+                        {% endif %}
+                    </button>
+                    <span id="likes-count-comment-{{ comment.id }}">{{ comment.likes_count }}</span>
+                </div>
+            </div>
+        {% empty %}
+            <p>Комментариев пока нет.</p>
         {% endfor %}
     </div>
 {% endblock %}
